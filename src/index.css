@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Outfit:wght@100..900&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  --moraware-blue: #0066CC;
+  --moraware-orange: #FF6B00;
+  --bg-dark: #0f0f1a;
+  --bg-card: #1a1a2e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-dark);
+  color: white;
+  min-height: 100vh;
+}
+
+/* Background gradient mesh */
+.bg-mesh {
+  background: 
+    radial-gradient(at 20% 20%, rgba(0, 102, 204, 0.15) 0%, transparent 50%),
+    radial-gradient(at 80% 80%, rgba(255, 107, 0, 0.1) 0%, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(26, 26, 46, 1) 0%, rgba(15, 15, 26, 1) 100%);
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(26, 26, 46, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Photo styling */
+.photo-frame {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 
+    0 0 0 4px rgba(0, 102, 204, 0.3),
+    0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.photo-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Option button styles */
+.option-btn {
+  @apply relative overflow-hidden transition-all duration-200 ease-out;
+  background: rgba(26, 26, 46, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.option-btn:hover:not(:disabled) {
+  background: rgba(0, 102, 204, 0.2);
+  border-color: rgba(0, 102, 204, 0.5);
+  transform: translateY(-2px);
+}
+
+.option-btn.correct {
+  background: rgba(34, 197, 94, 0.2) !important;
+  border-color: rgba(34, 197, 94, 0.8) !important;
+}
+
+.option-btn.incorrect {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(239, 68, 68, 0.8) !important;
+}
+
+.option-btn.reveal-correct {
+  background: rgba(34, 197, 94, 0.15) !important;
+  border-color: rgba(34, 197, 94, 0.5) !important;
+}
+
+/* Progress bar */
+.progress-fill {
+  background: linear-gradient(90deg, var(--moraware-blue), var(--moraware-orange));
+  transition: width 0.3s ease-out;
+}
+
+/* Score badge */
+.score-badge {
+  background: linear-gradient(135deg, var(--moraware-blue), var(--moraware-orange));
+  box-shadow: 0 4px 20px rgba(0, 102, 204, 0.4);
+}
+
+/* Disabled/Coming Soon style */
+.coming-soon {
+  @apply opacity-50 cursor-not-allowed relative overflow-hidden;
+}
+
+.coming-soon::after {
+  content: 'Coming Soon';
+  @apply absolute inset-0 flex items-center justify-center;
+  background: rgba(15, 15, 26, 0.8);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(26, 26, 46, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 102, 204, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 102, 204, 0.7);
+}
+
+/* Team card hover */
+.team-card {
+  @apply transition-all duration-300;
+}
+
+.team-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 102, 204, 0.2);
+}
+
+/* Mode card */
+.mode-card {
+  @apply transition-all duration-300;
+}
+
+.mode-card:hover:not(.coming-soon) {
+  transform: translateY(-4px);
+  border-color: var(--moraware-blue);
+  box-shadow: 0 12px 40px rgba(0, 102, 204, 0.15);
+}
