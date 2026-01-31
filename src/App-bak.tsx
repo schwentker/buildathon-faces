@@ -1,18 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { 
   Users, ChevronRight, CheckCircle2, 
-  XCircle, Sparkles, Target, Brain, BookOpen,
-  Linkedin
+  XCircle, Sparkles, Target, Brain, BookOpen
 } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import type { Personality } from './types';
 import confetti from 'canvas-confetti';
 
-// --- Utilities ---
+// --- Utility: Shuffle ---
 const shuffleArray = <T,>(array: T[]): T[] => [...array].sort(() => Math.random() - 0.5);
-const formatUrl = (url: string) => url.replace(/^https?:\/\/(www\.)?/, '');
 
-// --- Sub-Component: Photo Avatar ---
+// --- Sub-Component: Photo Avatar (Fixes No Photos Bug) ---
 function PhotoAvatar({ member, size = 'md' }: { member: Personality; size?: 'sm' | 'md' | 'lg' | 'xl' }) {
   const [imgError, setImgError] = useState(false);
   const sizeClasses = {
@@ -23,7 +21,7 @@ function PhotoAvatar({ member, size = 'md' }: { member: Personality; size?: 'sm'
   };
 
   return (
-    <div className={`${sizeClasses[size]} photo-frame rounded-full overflow-hidden flex-shrink-0 bg-slate-700 shadow-xl`}>
+    <div className={`${sizeClasses[size]} photo-frame rounded-full overflow-hidden flex-shrink-0 bg-slate-700`}>
       <img
         src={imgError ? `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name)}&background=random` : member.image_url}
         alt={member.full_name}
@@ -37,10 +35,10 @@ function PhotoAvatar({ member, size = 'md' }: { member: Personality; size?: 'sm'
 export default function App() {
   const [personalities, setPersonalities] = useState<Personality[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'home' | 'play' | 'results' | 'study'>('home');
+  const [view, setView] = useState<'home' | 'play' | 'results' | 'study' | 'team'>('home');
   const [highScore, setHighScore] = useState(parseInt(localStorage.getItem('sandbox-high-score') || '0'));
 
-  // Game & Study State
+  // Game State
   const [mode, setMode] = useState<'face-to-name' | 'face-to-title' | 'title-to-face'>('face-to-name');
   const [currentRound, setCurrentRound] = useState(0);
   const [score, setScore] = useState(0);
@@ -48,9 +46,8 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [quizPool, setQuizPool] = useState<Personality[]>([]);
   const [options, setOptions] = useState<Personality[]>([]);
-  const [, setMistakes] = useState<Personality[]>([]);
+  const [mistakes, setMistakes] = useState<Personality[]>([]);
   const [studyIndex, setStudyIndex] = useState(0);
-  const [showStudyDetails, setShowStudyDetails] = useState(false);
 
   useEffect(() => {
     async function getData() {
@@ -61,23 +58,29 @@ export default function App() {
     getData();
   }, []);
 
-  const generateTurn = useCallback((target: Personality, all: Personality[]) => {
-    const sameGenderPool = all.filter(p => p.gender === target.gender && p.id !== target.id);
-    const uniqueDistractors: Personality[] = [];
-    const seenValues = new Set([mode === 'face-to-title' ? target.title : target.full_name]);
-    const shuffledPool = sameGenderPool.sort(() => 0.5 - Math.random());
-    
-    for (const p of shuffledPool) {
-      const val = mode === 'face-to-title' ? p.title : p.full_name;
-      if (!seenValues.has(val) && uniqueDistractors.length < 3) {
-        seenValues.add(val);
-        uniqueDistractors.push(p);
-      }
+  // --- Logic Fix: Mixed Gender Distractors ---
+const generateTurn = useCallback((target: Personality, all: Personality[]) => {
+  // 1. Filter by gender to keep distractors consistent
+  const sameGenderPool = all.filter(p => p.gender === target.gender && p.id !== target.id);
+  
+  // 2. Ensure unique titles/names using a Set
+  const uniqueDistractors: Personality[] = [];
+  const seenValues = new Set([mode === 'face-to-title' ? target.title : target.full_name]);
+
+  const shuffledPool = sameGenderPool.sort(() => 0.5 - Math.random());
+  
+  for (const p of shuffledPool) {
+    const val = mode === 'face-to-title' ? p.title : p.full_name;
+    if (!seenValues.has(val) && uniqueDistractors.length < 3) {
+      seenValues.add(val);
+      uniqueDistractors.push(p);
     }
-    setOptions(shuffleArray([target, ...uniqueDistractors]));
-    setIsAnswered(false);
-    setSelectedId(null);
-  }, [mode]);
+  }
+
+  setOptions(shuffleArray([target, ...uniqueDistractors]));
+  setIsAnswered(false);
+  setSelectedId(null);
+}, [mode]);
 
   const startGame = (gameMode: typeof mode) => {
     const pool = shuffleArray(personalities).slice(0, 10);
@@ -131,17 +134,17 @@ export default function App() {
         {view === 'home' && (
           <div className="text-center animate-in fade-in duration-700">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/20 text-blue-400 text-sm font-medium mb-6">
-              <Sparkles className="w-4 h-4" /> Builder POC Repo
+              <Sparkles className="w-4 h-4" /> Team Recognition Game
             </div>
-            <h1 className="text-5xl font-black text-white mb-2 tracking-tight uppercase">Buildathon Faces</h1>
-            <p className="text-slate-400 text-lg mb-8 italic tracking-wide">Identify Judges & Mentors</p>
+            <h1 className="text-5xl font-black text-white mb-2 tracking-tight uppercase">Buildathon Judges</h1>
+            <p className="text-slate-400 text-lg mb-8 italic tracking-wide">Learn the Team</p>
             
             <div className="grid gap-4 max-w-lg mx-auto mb-12">
               <ModeCard icon={Users} title="Face → Name" desc="See a photo, guess the name" onClick={() => startGame('face-to-name')} />
               <ModeCard icon={Target} title="Title → Face" desc="See a job title, find the person" onClick={() => startGame('title-to-face')} />
               <ModeCard icon={Brain} title="Face → Title" desc="See a photo, guess their role" onClick={() => startGame('face-to-title')} />
               <div className="pt-4 border-t border-white/10">
-                <ModeCard icon={BookOpen} title="Study Mode" desc="Flashcards to learn the roster" onClick={() => setView('study')} />
+                <ModeCard icon={BookOpen} title="Study Mode" desc="Flip through cards to learn everyone" onClick={() => setView('study')} />
               </div>
             </div>
           </div>
@@ -150,13 +153,6 @@ export default function App() {
         {/* VIEW: PLAY */}
         {view === 'play' && quizPool[currentRound - 1] && (
           <div className="animate-in slide-in-from-bottom-4 duration-500">
-            {/* NEW: Demo-friendly Exit Link */}
-    <button 
-      onClick={() => setView('home')} 
-      className="mb-4 text-slate-500 hover:text-white flex items-center gap-2 font-black uppercase text-[10px] tracking-[0.2em] transition-colors"
-    >
-      ← Exit to Home
-    </button>
             <div className="flex justify-between items-end mb-4 text-sm font-bold text-slate-400">
               <span>Question {currentRound} of 10</span>
               <span className="text-blue-400">{score} Correct</span>
@@ -167,7 +163,9 @@ export default function App() {
 
             <div className="flex flex-col items-center">
               {mode !== 'title-to-face' ? (
-                <div className="mb-8"><PhotoAvatar member={quizPool[currentRound-1]} size="xl" /></div>
+                <div className="mb-8">
+                  <PhotoAvatar member={quizPool[currentRound-1]} size="xl" />
+                </div>
               ) : (
                 <div className="text-center mb-12 py-10 px-6 glass rounded-3xl w-full">
                    <p className="text-blue-400 uppercase tracking-widest text-xs font-black mb-2">Find the person whose title is:</p>
@@ -208,33 +206,16 @@ export default function App() {
 
               {isAnswered && (
                 <div className="w-full mt-8 animate-in fade-in slide-in-from-top-4">
-                  <div className="glass rounded-[32px] p-8 border border-white/10 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl -z-10" />
-                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
-                      <PhotoAvatar member={quizPool[currentRound-1]} size="lg" />
-                      <div className="flex-1 text-center sm:text-left">
-                        <div className="mb-4">
-                          <h3 className="text-3xl font-black text-white leading-tight">{quizPool[currentRound-1].full_name}</h3>
-                          <p className="text-blue-400 font-bold text-lg">{quizPool[currentRound-1].title}</p>
-                          <p className="text-slate-400 font-semibold uppercase tracking-wider text-xs mt-1">{quizPool[currentRound-1].organization}</p>
-                        </div>
-                        <div className="bg-slate-900/40 rounded-2xl p-4 mb-6 border border-white/5 italic text-sm text-slate-300 leading-relaxed">
-                          "{quizPool[currentRound-1].bio_blurb || "No bio provided."}"
-                        </div>
-                        <div className="flex flex-col sm:flex-row items-center gap-4">
-                          {quizPool[currentRound-1].linkedin_url && (
-                            <a href={quizPool[currentRound-1].linkedin_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-400 hover:text-white transition-colors font-bold text-sm">
-                              <Linkedin className="w-5 h-5" /> 
-                              <span className="underline decoration-blue-500/30 underline-offset-4">
-  {formatUrl(quizPool[currentRound-1].linkedin_url || '')}
-</span></a>
-                          )}
-                          <button onClick={nextQuestion} className="w-full sm:w-auto ml-auto bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-2xl font-black transition-all shadow-lg shadow-blue-900/20">
-                            NEXT →
-                          </button>
-                        </div>
-                      </div>
+                  <div className="glass rounded-3xl p-6 flex flex-col sm:flex-row items-center gap-6">
+                    <PhotoAvatar member={quizPool[currentRound-1]} size="lg" />
+                    <div className="flex-1 text-center sm:text-left">
+                      <h3 className="text-2xl font-bold text-white">{quizPool[currentRound-1].full_name}</h3>
+                      <p className="text-blue-400 font-bold">{quizPool[currentRound-1].title}</p>
+                      <p className="text-slate-400 text-sm mt-1">{quizPool[currentRound-1].organization}</p>
                     </div>
+                    <button onClick={nextQuestion} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-black transition-all">
+                      NEXT QUESTION →
+                    </button>
                   </div>
                 </div>
               )}
@@ -245,66 +226,69 @@ export default function App() {
         {/* VIEW: RESULTS */}
         {view === 'results' && (
           <div className="text-center py-12 animate-in zoom-in duration-500">
-            <h2 className="text-4xl font-black text-white mb-8">Game Over!</h2>
-            <div className="inline-flex items-center justify-center w-40 h-40 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 p-1 mb-10">
+            <div className="inline-flex items-center justify-center w-40 h-40 rounded-full bg-gradient-to-br from-blue-500 to-orange-500 p-1 mb-8">
               <div className="w-full h-full bg-slate-900 rounded-full flex flex-col items-center justify-center">
                 <span className="text-5xl font-black text-white">{score}</span>
-                <span className="text-xs font-bold text-slate-500 uppercase">Correct</span>
+                <span className="text-xs font-bold text-slate-500 uppercase">of 10</span>
               </div>
             </div>
-            <div className="flex flex-col gap-4 max-w-sm mx-auto mb-12">
-              <button onClick={() => startGame(mode)} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-3xl transition-all uppercase tracking-widest">Try Again</button>
-              <button onClick={() => setView('home')} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-5 rounded-3xl transition-all uppercase tracking-widest border border-white/5">Back to Home</button>
-            </div>
+            <h2 className="text-4xl font-black text-white mb-8">
+              {score === 10 ? "PERFECT SCORE! 🎉" : score >= 7 ? "GREAT JOB! 🚀" : "KEEP LEARNING! 💪"}
+            </h2>
+            
+            {mistakes.length > 0 && (
+              <div className="glass rounded-3xl p-6 text-left mb-8">
+                <h3 className="text-red-400 font-black mb-4 flex items-center gap-2 uppercase text-xs tracking-widest">
+                  <XCircle className="w-5 h-5" /> Review Mistakes
+                </h3>
+                <div className="grid gap-3">
+                  {mistakes.map((m, i) => (
+                    <div key={i} className="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/5">
+                      <PhotoAvatar member={m} size="sm" />
+                      <div>
+                        <div className="font-bold text-white">{m.full_name}</div>
+                        <div className="text-xs text-slate-500">{m.title}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <button onClick={() => setView('home')} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-3xl shadow-xl shadow-blue-500/20 transition-all uppercase tracking-widest">
+              Play Again
+            </button>
           </div>
         )}
 
         {/* VIEW: STUDY */}
         {view === 'study' && personalities[studyIndex] && (
           <div className="animate-in fade-in duration-500 text-center">
-             <button onClick={() => { setView('home'); setShowStudyDetails(false); }} className="mb-8 text-slate-500 hover:text-white flex items-center gap-2 mx-auto font-black uppercase text-[10px] tracking-[0.2em] transition-colors">← Exit Study Mode</button>
-             <div className="glass rounded-[40px] p-10 relative overflow-hidden">
-                <div className="flex justify-center mb-8">
-                   <PhotoAvatar member={personalities[studyIndex]} size="xl" />
-                </div>
-
-                {showStudyDetails ? (
-                  <div className="animate-in zoom-in duration-300">
-                    <h2 className="text-4xl font-black text-white mb-2 tracking-tight">{personalities[studyIndex].full_name}</h2>
-                    <p className="text-blue-400 text-xl font-bold mb-1 tracking-tight">{personalities[studyIndex].title}</p>
-                    <p className="text-slate-500 font-semibold uppercase tracking-wider text-xs mb-6">{personalities[studyIndex].organization}</p>
-                    
-                    <div className="bg-slate-900/50 p-6 rounded-3xl text-slate-400 text-sm leading-relaxed mb-8 border border-white/5 italic">
-                      "{personalities[studyIndex].bio_blurb || "A valued judge/mentor for the Buildathon."}"
-                    </div>
-
-                    {personalities[studyIndex].linkedin_url && (
-                      <div className="flex justify-center mb-8">
-                        <a href={personalities[studyIndex].linkedin_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-400 hover:text-white transition-colors font-bold text-sm">
-                          <Linkedin className="w-5 h-5" /> 
-                          <span className="underline decoration-blue-500/30 underline-offset-4">{formatUrl(personalities[studyIndex].linkedin_url)}</span>
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="py-12 animate-in fade-in">
-                    <h2 className="text-2xl font-black text-white/20 mb-8 uppercase tracking-[0.3em]">Who is this?</h2>
-                    <button onClick={() => setShowStudyDetails(true)} className="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 px-10 py-4 rounded-2xl font-black transition-all border border-blue-500/30 uppercase text-sm tracking-widest">Show Details</button>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-4 mt-10">
-                   <button disabled={studyIndex === 0} onClick={() => { setStudyIndex(s => s - 1); setShowStudyDetails(false); }} className="flex-1 bg-slate-800 p-5 rounded-2xl font-black disabled:opacity-20 transition-all uppercase text-xs tracking-widest">PREV</button>
-                   <div className="text-slate-500 font-mono text-xs font-bold">{studyIndex + 1} / {personalities.length}</div>
-                   <button disabled={studyIndex === personalities.length - 1} onClick={() => { setStudyIndex(s => s + 1); setShowStudyDetails(false); }} className="flex-1 bg-blue-600 p-5 rounded-2xl font-black disabled:opacity-20 transition-all uppercase text-xs tracking-widest">NEXT</button>
+             <button onClick={() => setView('home')} className="mb-8 text-slate-500 hover:text-white flex items-center gap-2 mx-auto font-black uppercase text-[10px] tracking-[0.2em] transition-colors">
+               ← Exit Study Mode
+             </button>
+             <div className="glass rounded-[40px] p-10 relative">
+                <div className="relative z-10">
+                   <div className="flex justify-center mb-8">
+                      <PhotoAvatar member={personalities[studyIndex]} size="xl" />
+                   </div>
+                   <h2 className="text-4xl font-black text-white mb-2 tracking-tight">{personalities[studyIndex].full_name}</h2>
+                   <p className="text-blue-400 text-xl font-bold mb-6">{personalities[studyIndex].title}</p>
+                   <div className="bg-slate-900/50 p-6 rounded-3xl text-slate-400 text-sm leading-relaxed mb-10 min-h-[100px] border border-white/5 italic">
+                     "{personalities[studyIndex].bio_blurb || "A valued member of the Buildathon team."}"
+                   </div>
+                   <div className="flex items-center gap-4">
+                      <button disabled={studyIndex === 0} onClick={() => setStudyIndex(s => s - 1)} className="flex-1 bg-slate-800 p-5 rounded-2xl font-black disabled:opacity-20 transition-all uppercase text-xs tracking-widest">PREV</button>
+                      <div className="text-slate-500 font-mono text-xs font-bold">{studyIndex + 1} / {personalities.length}</div>
+                      <button disabled={studyIndex === personalities.length - 1} onClick={() => setStudyIndex(s => s + 1)} className="flex-1 bg-blue-600 p-5 rounded-2xl font-black disabled:opacity-20 transition-all uppercase text-xs tracking-widest">NEXT</button>
+                   </div>
                 </div>
              </div>
           </div>
         )}
         
         <footer className="mt-20 text-center opacity-30 text-[10px] font-black uppercase tracking-[0.3em]">
-          Built with ❤️ for Buildathon Networking
+          Built with ❤️ for Enterprise Buildathons
         </footer>
       </div>
     </div>

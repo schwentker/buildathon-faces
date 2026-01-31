@@ -1,140 +1,67 @@
-# Moraware Team Recognition Game
+# bu!ld@th0n // FACES
 
-A Lumosity-style learning game designed to help new hires, remote colleagues, and team members quickly learn who's who at Moraware.
+> **"Know your judge, know your code."**
 
-## Why This Exists
+A memory training subsystem for the **bu!ld@th0n** platform. This module gamifies the onboarding process, requiring builders to demonstrate familiarity with the 25 AI Judges and 13 Industry Mentors before they can submit their final build.
 
-Joining a company or collaborating across departments is harder when you can't put faces to names. This is especially true for remote and hybrid teams where hallway introductions don't happen organically.
+## 🎯 Objective
+Unlock the **Judge Selection Panel** by achieving 100% accuracy in the faces game. 
 
-This game transforms the "getting to know the team" process from passive (scrolling a directory) to active (engaged learning through play). Research shows active recall and spaced repetition dramatically improve retention compared to passive review.
+* **Level 1 (The Legends):** Identify the 25 AI Judges (Fei-Fei Li, Jensen Huang, etc.).
+* **Level 2 (The Builders):** Unlock the 13 Mentors (Guillermo Rauch, John Carmack, etc.).
 
-I built this as a practical solution to a real onboarding challenge, demonstrating how lightweight, purpose-built tools can improve team dynamics without requiring enterprise software budgets or lengthy implementation cycles.
+## 🛠 Tech Stack
+* **Frontend:** React / Next.js (TypeScript)
+* **Data:** Supabase (PostgreSQL)
+* **Assets:** Supabase Storage (Headshots)
+* **Vibe:** Hacker / Terminal / Dark Mode
 
-## How It Works
+## 🚀 Setup & Install
 
-**Three Quiz Modes:**
-- **Face → Name:** See a photo, identify the person from four options
-- **Title → Face:** See a job title, find the matching person
-- **Face → Title:** See a photo, guess their role
+1.  **Clone & Install**
+    ```bash
+    git clone <repo-url>
+    cd buildathon-faces
+    npm install
+    ```
 
-**Study Mode:** Flashcard-style review of all team members with photos, titles, and LinkedIn profiles.
+2.  **Environment Variables**
+    Create a `.env.local` file:
+    ```bash
+    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
+    ```
 
-**Smart Matching:** Quiz options are gender-matched to increase difficulty and prevent easy elimination.
+3.  **Run Development Server**
+    ```bash
+    npm run dev
+    ```
 
-**Progress Tracking:** High scores saved locally. No login required.
+## 💽 Data Schema
 
-## Live Demo
+The game pulls from the `game_personalities` table in Supabase:
 
-[sandboxlabs.ai/moraware-team](https://sandboxlabs.ai/moraware-team)
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | uuid | Unique ID |
+| `full_name` | text | e.g., "Mira Murati" |
+| `role` | text | 'judge' or 'mentor' |
+| `bio_blurb` | text | "Founder & CEO, Thinking Machines Lab" |
+| `image_url` | text | URL to Supabase Storage bucket |
 
-## Potential Enhancements
+## 🕹 Game Logic
 
-The current version is intentionally simple. Future iterations could include:
+1.  **Fetch:** App loads randomized set of personalities from Supabase.
+2.  **Loop:** Displays 1 face + 4 name options.
+3.  **Scoring:**
+    * Correct: +10 points, Face removed from pool.
+    * Incorrect: -5 points, Face reshuffled into queue.
+4.  **Win State:** When pool is empty, update user profile `judges_unlocked: true`.
 
-- **Spaced Repetition Algorithm:** Surface people you struggle with more frequently
-- **Timed Challenge Mode:** 60-second rounds for competitive play
-- **Team Leaderboard:** Foster friendly competition during onboarding
-- **Slack Integration:** Daily "Who's this?" challenges in team channels
-- **Department Filtering:** Focus on learning specific teams
-- **New Hire Spotlight:** Automatically surface recently joined members
-- **Analytics Dashboard:** Track team-wide learning progress
-
-## Technical Stack
-
-| Layer | Technology |
-|-------|------------|
-| Framework | React 18 + TypeScript |
-| Build | Vite |
-| Styling | Tailwind CSS v4 |
-| Database | Supabase (PostgreSQL) |
-| Icons | Lucide React |
-| Hosting | Static deployment (Hugo/Cloudflare) |
-
-The architecture supports multi-company deployment through a simple configuration layer, making it adaptable for different organizations with minimal modification.
-
-## Self-Hosting / Implementation
-
-### Prerequisites
-- Node.js 18+
-- Supabase account (free tier works)
-
-### Quick Start
-
-```bash
-# Clone and install
-git clone https://github.com/schwentker/moraware-team-game.git
-cd moraware-team-game
-npm install
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your Supabase credentials
-
-# Development
-npm run dev
-
-# Production build
-npm run build
-```
-
-### Database Setup
-
-Create a `team_members` table in Supabase:
-
-```sql
-CREATE TABLE public.team_members (
-  id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  full_name text NOT NULL UNIQUE,
-  title text,
-  linkedin_url text UNIQUE,
-  photo_url text,
-  education text,
-  bio text,
-  gender char(1),
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
-```
-
-### Customization
-
-Update `src/config/company.ts` with your organization's details:
-
-```typescript
-export const companyConfig = {
-  id: 'your-company',
-  name: 'Your Company',
-  tagline: 'Learn the Team',
-  colors: {
-    primary: '#0066CC',
-    accent: '#FF6B00',
-  },
-  // ...
-};
-```
-
-Photo URLs are mapped in `src/lib/photo-utils.ts` to handle naming inconsistencies between data sources and CDN paths.
-
-## Project Structure
-
-```
-src/
-├── config/
-│   └── company.ts       # Company branding & settings
-├── lib/
-│   ├── photo-utils.ts   # Photo URL resolution
-│   ├── supabase.ts      # Database client
-│   └── team-service.ts  # Data layer & mock data
-├── types/
-│   └── index.ts         # TypeScript interfaces
-├── App.tsx              # Main application
-└── index.css            # Tailwind styles
-```
-
-## About the Developer
-
-Built by [Robert Schwentker](https://www.linkedin.com/in/schwentker), AI Education Strategist at Sandbox Labs AI. With 25+ years in developer relations and technology education, I focus on building practical tools that solve real problems at the intersection of AI, education, and team enablement.
+## 🏗 Status
+* [ ] **Core Game Loop:** Functional
+* [ ] **Supabase Integration:** Pending
+* [ ] **Mentor Mode Unlock:** Locked
 
 ---
-
-*Built with care for Moraware*
+*Built for the [bu!ld@th0n] protocol.*

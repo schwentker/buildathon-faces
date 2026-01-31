@@ -1,0 +1,21 @@
+// src/types.ts
+
+export interface Personality {
+  id: string;
+  full_name: string;
+  roles: string[];  // Changed from role: 'judge' | 'mentor'
+  gender: 'female' | 'male' | 'other';
+  organization: string;
+  title: string;
+  bio_blurb: string;
+  image_url: string;
+  linkedin_url?: string;
+  created_at?: string;
+}
+
+export interface GameState {
+  score: number;
+  streak: number;
+  highScore: number;
+  judgesUnlocked: boolean;
+}
