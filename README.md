@@ -2,13 +2,13 @@
 
 > **"Know your judge, know your code."**
 
-A memory training subsystem for the **bu!ld@th0n** platform. This module gamifies the onboarding process, requiring builders to demonstrate familiarity with the 25 AI Judges and 13 Industry Mentors before they can submit their final build.
+Memory training subsystem for **bu!ld@th0n** platform. Module gamifies onboarding process, requiring builders to demonstrate familiarity w/ AI Judges & Industry Mentors before they can submit their final build.
 
 ## 🎯 Objective
-Unlock the **Judge Selection Panel** by achieving 100% accuracy in the faces game. 
+Unlock **Judge Selection Panel** by achieving 100% accuracy in faces game - theoretically. 
 
-* **Level 1 (The Legends):** Identify the 25 AI Judges (Fei-Fei Li, Jensen Huang, etc.).
-* **Level 2 (The Builders):** Unlock the 13 Mentors (Guillermo Rauch, John Carmack, etc.).
+* **Level 1 (Legends):** Identify AI Judges (Fei-Fei Li, Jensen Huang, etc.).
+* **Level 2 (Builders):** Unlock Mentors (Guillermo Rauch, John Carmack, etc.).
 
 ## 🛠 Tech Stack
 * **Frontend:** React / Next.js (TypeScript)
